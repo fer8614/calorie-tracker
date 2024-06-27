@@ -1,4 +1,4 @@
-import { Dispatch, ReactNode, createContext, useReducer } from "react";
+import { Dispatch, ReactNode, createContext, useMemo, useReducer } from "react";
 import { ActivityActions, ActivityState, activityReducer, initialState } from "../reducers/activity-reducer";
 
 type ActivityProviderProps = {
@@ -9,6 +9,9 @@ type ActivityProviderProps = {
 type ActivityContextProps = {
     state: ActivityState
     dispatch: Dispatch<ActivityActions>
+    caloriesConsumed: number
+    caloriesBurned: number
+    netCalories: number
 }
 
 export const ActivityContext = createContext<ActivityContextProps>(null!)
@@ -17,10 +20,24 @@ export const ActivityProvider = ( { children } : ActivityProviderProps ) => {
 
     const [ state, dispatch ] = useReducer( activityReducer, initialState )
 
+    //Counters
+    const caloriesConsumed = useMemo(() => state.activities.reduce( 
+        ( accumulator, activity ) => 
+            activity.category === 1 ? accumulator + activity.calories : accumulator, 0 ), [state.activities])
+
+    const caloriesBurned = useMemo(() => state.activities.reduce(
+        ( accumulator, activity ) => 
+            activity.category === 2 ? accumulator + activity.calories : accumulator, 0 ), [state.activities]) 
+    
+    const netCalories = useMemo(() => caloriesConsumed - caloriesBurned, [state.activities]);
+
     return(
         <ActivityContext.Provider value={{
             state,
-            dispatch
+            dispatch,
+            caloriesConsumed,
+            caloriesBurned,
+            netCalories
         }}>
             {children}
         </ActivityContext.Provider>
